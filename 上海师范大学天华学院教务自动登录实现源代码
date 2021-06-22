@@ -1,0 +1,42 @@
+// ==UserScript==
+// @name         上海师范大学天华学院教务系统自动登录 来自 慕远
+// @namespace    https://xunichangan.github.io/
+// @version      0.1
+// @description  上海师范大学天华学院教务可用，by慕远
+// @author       Drsanwujiang
+// @require      http://libs.baidu.com/jquery/1.7.2/jquery.min.js
+// @match        *://*/xtgl/login_slogin.html*
+// @match        *://*/*/xtgl/login_slogin.html*
+// @run-at       document-start
+// @grant        none
+// ==/UserScript==
+
+new MutationObserver(function() {
+    if (document.head) {
+        var csp_meta = document.querySelectorAll('meta')[3];
+        if (csp_meta) {
+            csp_meta.remove(); //干TMD CSP！！！
+            this.disconnect(); //取消监听
+        }
+    }
+}).observe(document, {childList: true, subtree: true});
+
+$(function() {
+    'use strict';
+
+    $("#yhm").attr("value", "120171020304"); //学号
+    $("#mm").attr("value", "youyou926499"); //密码
+
+    //执行的太快了，导致登录按钮的click事件还没被监听，只能自己登录了
+    var modulus,exponent;
+	$.getJSON(_path+"/xtgl/login_getPublicKey.html?time="+new Date().getTime(),function(data){
+		modulus = data["modulus"];
+		exponent = data["exponent"];
+        var rsaKey = new RSAKey();
+        rsaKey.setPublic(b64tohex(modulus), b64tohex(exponent));
+        var enPassword = hex2b64(rsaKey.encrypt($("#mm").val()));
+        $("#mm").val(enPassword);
+        $("#hidMm").val(enPassword);
+        document.forms[0].submit();
+	});
+});
